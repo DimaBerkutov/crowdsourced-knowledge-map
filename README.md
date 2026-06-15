@@ -5,7 +5,7 @@ between them are **edges**, rendered as an interactive, force-directed graph.
 Anyone can add concepts, facts, questions, and resources and connect them into a
 living web of knowledge.
 
-🔗 **Live demo:** https://dimaberkutov.github.io/crowdsourced-knowledge-map/
+🔗 **Live demo:** https://crowdsourced-knowledge-map.vercel.app/
 
 ---
 
