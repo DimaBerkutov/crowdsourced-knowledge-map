@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Crowdsourced Knowledge Map
 
-## Getting Started
+A collaborative knowledge map: nodes (concepts/facts) and the edges between
+them, visualized as an interactive force-directed graph.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Supabase ·
+react-force-graph-2d.
+
+## Features (MVP)
+
+- Public read access to the graph (RLS: `public SELECT`).
+- Node creation by authenticated users (form on the left).
+- Graph with draggable nodes and clickable edges (shows the relation type).
+- Sign-in via magic link (Supabase Auth, email OTP).
+
+## Setup
+
+1. **Create a Supabase project** and open Project Settings → API.
+2. **Fill in `.env.local`** (see `.env.example`):
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
+3. **Apply the migration** `supabase/migrations/0001_init.sql` — paste its
+   contents into the Supabase SQL Editor and run it (creates the `nodes`/`edges`
+   tables, indexes, the `updated_at` trigger, and RLS policies).
+4. **Auth redirect:** in Supabase → Authentication → URL Configuration, add
+   `http://localhost:3000/auth/callback` to the Redirect URLs.
+
+## Running
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install --legacy-peer-deps   # React 19 peer-deps
+npm run dev                      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run build` — production build (includes TypeScript and ESLint checks).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Seeding sample data
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+node --env-file=.env.local scripts/seed.mjs --reset
+```
 
-## Learn More
+Populates the map with a starter Machine Learning / Data Science graph. Uses the
+service-role key (bypasses RLS) and leaves `created_by` null. `--reset` wipes the
+`km_*` tables first.
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+supabase/migrations/0001_init.sql   # schema + RLS
+src/
+  proxy.ts                          # Supabase session refresh (formerly middleware)
+  lib/supabase/{client,server,middleware,env}.ts
+  types/graph.ts                    # DbNode/DbEdge → GraphData
+  components/{GraphView,CreateNodeForm,CreateEdgeForm,AuthButton}.tsx
+  app/
+    page.tsx                        # graph loading (Server Component) + UI
+    login/page.tsx                  # magic-link sign-in
+    auth/callback/route.ts          # exchange code for a session
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Next (beyond MVP)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Voting (`votes`) and moderation.
+- UI for creating edges between nodes.
+- Realtime updates via Supabase Realtime.
